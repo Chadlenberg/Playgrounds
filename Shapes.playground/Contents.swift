@@ -109,3 +109,88 @@ final class SVGContext: DrawingContext {
         return "<!DOCTYPE html><html><body>" + svgString + "</body></html>"
     }
 }
+
+struct SVGDocument {
+    var drawables: [Drawable]=[]
+    var htmlString: String {
+        let context = SVGContext()
+        for Drawable in drawables {
+            Drawable.draw(with: context)
+        }
+        return context.htmlString
+    }
+    
+    mutating func append(_ drawable: Drawable) {
+        drawables.append(drawable)
+    }
+}
+
+
+var document = SVGDocument()
+
+let rectangle = Rectangle()
+document.append(rectangle)
+
+let circle = Circle()
+document.append(circle)
+
+let htmlString = document.htmlString
+print(htmlString)
+
+
+import WebKit
+import PlaygroundSupport
+let view = WKWebView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
+view.loadHTMLString(htmlString, baseURL: nil)
+PlaygroundPage.current.liveView = view
+
+
+extension Circle {
+    var diameter: Double {
+        get {
+            return radius * 2
+        }
+        set {
+            radius = newValue / 2
+        }
+    }
+    
+    // Example of getter-only computed properties
+    var area: Double {
+        return radius * radius * Double.pi
+    }
+    var perimeter: Double {
+        return 2 * radius * Double.pi
+    }
+    
+    mutating func shift(x: Double, y: Double) {
+        center.x += x
+        center.y += y
+    }
+    
+}
+extension Rectangle {
+    var area: Double {
+        return size.width * size.height
+    }
+    
+    var perimeter: Double {
+        return 2 * (size.width + size.height)
+    }
+}
+
+
+protocol ClosedShape {
+    var area: Double { get }
+    var perimeter: Double { get }
+}
+
+extension Circle : ClosedShape {}
+extension Rectangle : ClosedShape {}
+
+func totalPerimiter(shapes: [ClosedShape]) -> Double {
+    return shapes.reduce(0) { $0 + $1.perimeter}
+}
+
+totalPerimiter(shapes: [circle, rectangle])
+
